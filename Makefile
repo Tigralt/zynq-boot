@@ -34,6 +34,7 @@ BOOTGEN:=$(shell command -v bootgen 2> /dev/null)
 
 
 all: u-boot linux fsbl ramdisk boot.bin
+	@echo "Work is done! You can now copy files from '$(SDCARD_DIR)'/ to your SD card or use the make option to do so."
 
 u-boot:
 	@[ -d "$(SDCARD_DIR)" ] || mkdir $(SDCARD_DIR)
