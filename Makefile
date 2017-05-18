@@ -34,7 +34,7 @@ BOOTGEN:=$(shell command -v bootgen 2> /dev/null)
 
 
 all: u-boot linux fsbl ramdisk boot.bin
-	@echo "Work is done! You can now copy files from '$(SDCARD_DIR)'/ to your SD card or use the make option to do so."
+	@echo "Done! You can now copy files from '$(SDCARD_DIR)'/ to your SD card or use the make option to do so."
 
 u-boot:
 	@[ -d "$(SDCARD_DIR)" ] || mkdir $(SDCARD_DIR)
@@ -89,6 +89,7 @@ format.sdcard:
 
 make.sdcard:
 	@read -p "Where is mounted the SD card?: " sdcard_mount; rm $$sdcard_mount/*; cp $(SDCARD_DIR)/* $$sdcard_mount/
+	@echo "Done!"
 
 all.sdcard: format.sdcard make.sdcard
 
