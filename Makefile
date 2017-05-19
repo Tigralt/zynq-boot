@@ -18,8 +18,8 @@ U_BOOT_REPO=https://github.com/Xilinx/$(U_BOOT_DIR)
 U_BOOT_CONFIG=zynq_$(BOARD)_config
 
 # uImage config
-LINUX_DIR=linux-xlnx
-LINUX_REPO=https://github.com/Xilinx/$(LINUX_DIR)
+LINUX_DIR=linux-digilent
+LINUX_REPO=https://github.com/Digilent/$(LINUX_DIR)
 LINUX_CROSS_COMPILE=arm-linux-gnueabi-
 LINUX_DEVICE_TREE=arch/arm/boot/dts/zynq-$(BOARD).dts
 
@@ -33,7 +33,7 @@ RAMDISK_DIR=ramdisk-xlnx
 BOOTGEN:=$(shell command -v bootgen 2> /dev/null)
 
 
-all: u-boot linux fsbl ramdisk boot.bin
+all: u-boot linux devicetree fsbl ramdisk boot.bin
 	@echo "Done! You can now copy files from '$(SDCARD_DIR)'/ to your SD card or use the make option to do so."
 
 u-boot:
@@ -49,13 +49,16 @@ linux:
 	@[ -d "$(U_BOOT_DIR)" ] || make u-boot
 	@[ -d "$(LINUX_DIR)" ] || echo "Downloading linux repository from $(LINUX_REPO)"
 	@[ -d "$(LINUX_DIR)" ] || git clone $(LINUX_REPO);
-	@cp .config $(LINUX_DIR)
+	@cp .config $(LINUX_DIR)/
 	make -C $(LINUX_DIR) ARCH=arm CROSS_COMPILE=$(CROSS_COMPILE) UIMAGE_LOADADDR=$(UIMAGE_LOADADDR) PATH=$(PATH):$(shell pwd)/$(U_BOOT_DIR)/tools/ uImage
-	@echo "Make board devicetree"
 	@sed -i 's/\#include/\/include\//g' $(LINUX_DIR)/arch/arm/boot/dts/zynq-$(BOARD).dts
-	@$(LINUX_DIR)/scripts/dtc/dtc -I dts -O dtb -o $(SDCARD_DIR)/devicetree.dtb $(LINUX_DIR)/arch/arm/boot/dts/zynq-$(BOARD).dts
 	@cp $(LINUX_DIR)/arch/arm/boot/uImage $(SDCARD_DIR)/
 	@cp $(SDCARD_DIR)/uImage $(SDCARD_DIR)/uImage.bin
+
+devicetree:
+	@[ -e "$(LINUX_DIR)/arch/arm/boot/dts/zynq-$(BOARD).dts" ] || (echo "The devicetree could not be found, did you compile the linux kernel beforehand?" && exit -1)
+	@echo "Make board devicetree"
+	@$(LINUX_DIR)/scripts/dtc/dtc -I dts -O dtb -o $(SDCARD_DIR)/devicetree.dtb $(LINUX_DIR)/arch/arm/boot/dts/zynq-$(BOARD).dts
 
 fsbl:
 	@if ! [ -d "$(SDCARD_DIR)" ]; then mkdir $(SDCARD_DIR); fi
@@ -100,11 +103,12 @@ help:
 	@echo "    MOUNT:         The sd card mount point (default: /dev/sdb)"
 	@echo "    TOOL:"
 	@echo "        all (default): Make u-boot, linux, fsbl, ramdisk and boot.bin"
-	@echo "        u-boot:   Make the u-boot.elf file"
-	@echo "        linux:    Make the linux uImage"
-	@echo "        fsbl:     Select the correct FSBL"
-	@echo "        ramdisk:  Make the ramdisk image"
-	@echo "        boot.bin: Make the BOOT.bin file"
+	@echo "        u-boot:        Make the u-boot.elf file"
+	@echo "        linux:         Make the linux uImage"
+	@echo "        devicetree:    Make the board devicetree"
+	@echo "        fsbl:          Select the correct FSBL"
+	@echo "        ramdisk:       Make the ramdisk image"
+	@echo "        boot.bin:      Make the BOOT.bin file"
 	@echo "        format.sdcard: Format the sdcard for the board"
 	@echo "        make.sdcard:   Copy all files to SD card"
 	@echo "        all.sdcard:    Format SD card then copy all files on it"
