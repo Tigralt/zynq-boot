@@ -16,12 +16,14 @@ UIMAGE_LOADADDR?=0x8000
 U_BOOT_DIR=u-boot-xlnx
 U_BOOT_REPO=https://github.com/Xilinx/$(U_BOOT_DIR)
 U_BOOT_CONFIG=zynq_$(BOARD)_config
+U_BOOT_VERSION=xilinx-v2017.4
 
 # uImage config
 LINUX_DIR=linux-digilent
 LINUX_REPO=https://github.com/Digilent/$(LINUX_DIR)
 LINUX_CROSS_COMPILE=arm-linux-gnueabi-
 LINUX_DEVICE_TREE=arch/arm/boot/dts/zynq-$(BOARD).dts
+LINUX_VERSION=digilent-v4.4
 
 # FSBL config
 FSBL_DIR=fsbl-xlnx
@@ -40,6 +42,7 @@ u-boot:
 	@[ -d "$(SDCARD_DIR)" ] || mkdir $(SDCARD_DIR)
 	@[ -d "$(U_BOOT_DIR)" ] || echo "Downloading u-boot repository from $(U_BOOT_REPO)"
 	@[ -d "$(U_BOOT_DIR)" ] || git clone $(U_BOOT_REPO)
+	@cd $(U_BOOT_DIR)/; git checkout $(U_BOOT_VERSION); cd ..
 	make -C $(U_BOOT_DIR) ARCH=arm CROSS_COMPILE=$(CROSS_COMPILE) zynq_$(BOARD)_config
 	make -C $(U_BOOT_DIR) ARCH=arm CROSS_COMPILE=$(CROSS_COMPILE)
 	@cp $(U_BOOT_DIR)/u-boot $(SDCARD_DIR)/u-boot.elf
@@ -49,7 +52,9 @@ linux:
 	@[ -d "$(U_BOOT_DIR)" ] || make u-boot
 	@[ -d "$(LINUX_DIR)" ] || echo "Downloading linux repository from $(LINUX_REPO)"
 	@[ -d "$(LINUX_DIR)" ] || git clone $(LINUX_REPO);
+	@cd $(LINUX_DIR)/; git checkout $(LINUX_VERSION); cd ..
 	@cp .config $(LINUX_DIR)/
+	@export PATH="$(U_BOOT_DIR)/tools/:$(PATH)"
 	make -C $(LINUX_DIR) ARCH=arm CROSS_COMPILE=$(CROSS_COMPILE) UIMAGE_LOADADDR=$(UIMAGE_LOADADDR) PATH=$(PATH):$(shell pwd)/$(U_BOOT_DIR)/tools/ uImage
 	@sed -i 's/\#include/\/include\//g' $(LINUX_DIR)/arch/arm/boot/dts/zynq-$(BOARD).dts
 	@cp $(LINUX_DIR)/arch/arm/boot/uImage $(SDCARD_DIR)/
