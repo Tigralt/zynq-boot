@@ -32,7 +32,8 @@ FSBL_DIR=fsbl-xlnx
 RAMDISK_DIR=ramdisk-xlnx
 
 # BOOT.bin config
-BOOTGEN:=$(shell command -v bootgen 2> /dev/null)
+BOOTGEN_DIR=zynq-mkbootimage
+BOOTGEN_REPO=https://github.com/antmicro/$(BOOTGEN_DIR)
 
 
 all: u-boot linux devicetree fsbl ramdisk boot.bin
@@ -76,8 +77,10 @@ ramdisk:
 	@$(U_BOOT_DIR)/tools/mkimage -A arm -T ramdisk -C gzip -d $(RAMDISK_DIR)/arm_ramdisk.image.gz $(SDCARD_DIR)/uramdisk.image.gz
 
 boot.bin:
-	@echo "all: { [bootloader]$(SDCARD_DIR)/fsbl.elf $(SDCARD_DIR)/u-boot.elf [load=0x2000000]$(SDCARD_DIR)/devicetree.dtb [load=0x4000000]$(SDCARD_DIR)/uramdisk.image.gz [load=0x2080000]$(SDCARD_DIR)/uImage.bin }" > $(SDCARD_DIR)/boot.bif
-	@bootgen -image $(SDCARD_DIR)/boot.bif -o i $(SDCARD_DIR)/BOOT.bin -w
+	@echo "all:\n{\n  [bootloader]$(SDCARD_DIR)/fsbl.elf\n  $(SDCARD_DIR)/u-boot.elf\n  [load=0x2000000]$(SDCARD_DIR)/devicetree.dtb\n  [load=0x4000000]$(SDCARD_DIR)/uramdisk.image.gz\n  [load=0x2080000]$(SDCARD_DIR)/uImage.bin\n}" > $(SDCARD_DIR)/boot.bif
+	@if ! [ -d "$(BOOTGEN_DIR)" ]; then git clone $(BOOTGEN_REPO); fi
+	@cd $(BOOTGEN_DIR); make; cd ..
+	@$(BOOTGEN_DIR)/mkbootimage $(SDCARD_DIR)/boot.bif $(SDCARD_DIR)/BOOT.bin
 	@rm $(SDCARD_DIR)/*.elf $(SDCARD_DIR)/uImage.bin $(SDCARD_DIR)/*.bif
 
 clean:
@@ -90,7 +93,7 @@ format.sdcard:
 	@echo "Root authorization is required in order to format sd card."
 	@echo "Verify that the sd card is not mounted, the format will fail otherwise!"
 	@sudo dd if=/dev/zero of=/dev/$(MOUNT) bs=1024 count=1
-	@echo -e "x\nh\n255\ns\n63\nr\nn\np\n1\n2048\n+200M\nn\np\n2\n\n\na\n1\nt\n1\nc\nt\n2\n83\nw\n" | sudo fdisk /dev/$(MOUNT)
+	@echo "x\nh\n255\ns\n63\nr\nn\np\n1\n2048\n+200M\nn\np\n2\n\n\na\n1\nt\n1\nc\nt\n2\n83\nw\n" | sudo fdisk /dev/$(MOUNT)
 	@sudo mkfs.vfat -F 32 -n BOOT /dev/$(MOUNT)1
 	@sudo mkfs.ext4 -L root /dev/$(MOUNT)2
 	@echo "SD card format successful! You can know copy files from '$(SDCARD_DIR)/' to SD card."
