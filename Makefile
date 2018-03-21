@@ -62,9 +62,9 @@ linux:
 	@cp $(SDCARD_DIR)/uImage $(SDCARD_DIR)/uImage.bin
 
 devicetree:
-	@[ -e "$(LINUX_DIR)/arch/arm/boot/dts/zynq-$(BOARD).dts" ] || (echo "The devicetree could not be found, did you compile the linux kernel beforehand?" && exit -1)
+	#@[ -e "$(LINUX_DIR)/arch/arm/boot/dts/zynq-$(BOARD).dts" ] || (echo "The devicetree could not be found, did you compile the linux kernel beforehand?" && exit -1)
 	@echo "Make board devicetree"
-	@$(LINUX_DIR)/scripts/dtc/dtc -I dts -O dtb -o $(SDCARD_DIR)/devicetree.dtb $(LINUX_DIR)/arch/arm/boot/dts/zynq-$(BOARD).dts
+	@$(LINUX_DIR)/scripts/dtc/dtc -I dts -O dtb -o $(SDCARD_DIR)/devicetree.dtb dts/xillinux-1.3-$(BOARD).dts
 
 fsbl:
 	@if ! [ -d "$(SDCARD_DIR)" ]; then mkdir $(SDCARD_DIR); fi
@@ -77,7 +77,7 @@ ramdisk:
 	@$(U_BOOT_DIR)/tools/mkimage -A arm -T ramdisk -C gzip -d $(RAMDISK_DIR)/arm_ramdisk.image.gz $(SDCARD_DIR)/uramdisk.image.gz
 
 boot.bin:
-	@echo "all:\n{\n  [bootloader]$(SDCARD_DIR)/fsbl.elf\n  $(SDCARD_DIR)/u-boot.elf\n  [load=0x2000000]$(SDCARD_DIR)/devicetree.dtb\n  [load=0x4000000]$(SDCARD_DIR)/uramdisk.image.gz\n  [load=0x2080000]$(SDCARD_DIR)/uImage.bin\n}" > $(SDCARD_DIR)/boot.bif
+	@echo "all:\n{\n  [bootloader]$(SDCARD_DIR)/fsbl.elf\n  $(SDCARD_DIR)/fpga.bit\n  $(SDCARD_DIR)/u-boot.elf\n  [load=0x2000000]$(SDCARD_DIR)/devicetree.dtb\n  [load=0x4000000]$(SDCARD_DIR)/uramdisk.image.gz\n  [load=0x2080000]$(SDCARD_DIR)/uImage.bin\n}" > $(SDCARD_DIR)/boot.bif
 	@if ! [ -d "$(BOOTGEN_DIR)" ]; then git clone $(BOOTGEN_REPO); fi
 	@cd $(BOOTGEN_DIR); make; cd ..
 	@$(BOOTGEN_DIR)/mkbootimage $(SDCARD_DIR)/boot.bif $(SDCARD_DIR)/BOOT.bin
