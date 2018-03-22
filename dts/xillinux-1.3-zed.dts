@@ -114,13 +114,12 @@
 			} ;
 		} ;
 		ps7_gpio_0: ps7-gpio@e000a000 {
+			compatible = "xlnx,zynq-gpio-1.0";
 			#gpio-cells = <2>;
+			#interrupt-cells = <2>;
 			clocks = <&clkc 42>;
-			compatible = "xlnx,ps7-gpio-1.00.a";
-			emio-gpio-width = <64>;
 			gpio-controller;
-			gpio-mask-high = <0xc0000>;
-			gpio-mask-low = <0xfe81>;
+			interrupt-controller;
 			interrupt-parent = <&ps7_scugic_0>;
 			interrupts = <0 20 4>;
 			reg = <0xe000a000 0x1000>;
@@ -250,19 +249,6 @@
 						"gpio_aper", "lqspi_aper", "smc_aper", "swdt",
 						"dbg_trc", "dbg_apb";
 				reg = <0x100 0x100>;
-			};
-
-			rstc: rstc@200 {
-				compatible = "xlnx,zynq-reset";
-				reg = <0x200 0x48>;
-				#reset-cells = <1>;
-				syscon = <&ps7_slcr_0>;
-			};
-
-			pinctrl0: pinctrl@700 {
-				compatible = "xlnx,pinctrl-zynq";
-				reg = <0x700 0x200>;
-				syscon = <&ps7_slcr_0>;
 			};
 		} ;
 		ps7_ttc_0: ps7-ttc@f8001000 {
