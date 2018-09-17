@@ -2,7 +2,7 @@
 SDCARD_DIR=sdcard
 
 # sdcard config
-MOUNT?=sdb
+MOUNT?=sdc
 MOUNTED=`ls /dev | grep -c $(MOUNT)`
 
 # Compile config
@@ -16,7 +16,7 @@ UIMAGE_LOADADDR?=0x8000
 U_BOOT_DIR=u-boot-xlnx
 U_BOOT_REPO=https://github.com/Xilinx/$(U_BOOT_DIR)
 U_BOOT_CONFIG=zynq_$(BOARD)_config
-U_BOOT_VERSION=xilinx-v2017.4
+U_BOOT_VERSION=xilinx-v2018.2
 
 # uImage config
 LINUX_DIR=linux-digilent
@@ -34,6 +34,11 @@ RAMDISK_DIR=ramdisk-xlnx
 # BOOT.bin config
 BOOTGEN_DIR=zynq-mkbootimage
 BOOTGEN_REPO=https://github.com/antmicro/$(BOOTGEN_DIR)
+
+# Check commands
+ifeq (, $(shell which $(LINUX_CROSS_COMPILE)gcc))
+        $(error "Missing $(LINUX_CROSS_COMPILE)gcc, please install it.")
+endif
 
 
 all: u-boot linux devicetree fsbl ramdisk boot.bin
@@ -62,9 +67,9 @@ linux:
 	@cp $(SDCARD_DIR)/uImage $(SDCARD_DIR)/uImage.bin
 
 devicetree:
-	#@[ -e "$(LINUX_DIR)/arch/arm/boot/dts/zynq-$(BOARD).dts" ] || (echo "The devicetree could not be found, did you compile the linux kernel beforehand?" && exit -1)
+	#@[ -e "$(LINUX_DIR)/arch/arm/boot/dts/zynq-$(BOARD).dts" ] || (echo "The devicetree could not be found, did you compile the linux kernel beforehand?" && exit 1)
 	@echo "Make board devicetree"
-	@$(LINUX_DIR)/scripts/dtc/dtc -I dts -O dtb -o $(SDCARD_DIR)/devicetree.dtb dts/xillinux-1.3-$(BOARD).dts
+	@$(LINUX_DIR)/scripts/dtc/dtc -I dts -O dtb -o $(SDCARD_DIR)/devicetree.dtb dts/zynq-$(BOARD).dts
 
 fsbl:
 	@if ! [ -d "$(SDCARD_DIR)" ]; then mkdir $(SDCARD_DIR); fi
@@ -77,6 +82,7 @@ ramdisk:
 	@$(U_BOOT_DIR)/tools/mkimage -A arm -T ramdisk -C gzip -d $(RAMDISK_DIR)/arm_ramdisk.image.gz $(SDCARD_DIR)/uramdisk.image.gz
 
 boot.bin:
+	@[ -f "$(SDCARD_DIR)/fpga.bit" ] || (echo "No bitstream found in $(SDCARD_DIR)/. Please move your bitstream in $(SDCARD_DIR) and rename it fpga.bit" && exit 1)
 	@echo "all:\n{\n  [bootloader]$(SDCARD_DIR)/fsbl.elf\n  $(SDCARD_DIR)/fpga.bit\n  $(SDCARD_DIR)/u-boot.elf\n  [load=0x2000000]$(SDCARD_DIR)/devicetree.dtb\n  [load=0x4000000]$(SDCARD_DIR)/uramdisk.image.gz\n  [load=0x2080000]$(SDCARD_DIR)/uImage.bin\n}" > $(SDCARD_DIR)/boot.bif
 	@if ! [ -d "$(BOOTGEN_DIR)" ]; then git clone $(BOOTGEN_REPO); fi
 	@cd $(BOOTGEN_DIR); make; cd ..
@@ -89,17 +95,17 @@ clean:
 	@if [ -d "$(SDCARD_DIR)" ]; then rm -rf $(SDCARD_DIR); fi
 
 format.sdcard:
-	@[ $(MOUNTED) -gt 0 ] || (echo "SD card mount point '/dev/$(MOUNT)' not found. Is the sd card mounted?" && exit -1)
+	@[ $(MOUNTED) -gt 0 ] || (echo "SD card mount point '/dev/$(MOUNT)' not found. Is the sd card mounted?" && exit 1)
 	@echo "Root authorization is required in order to format sd card."
 	@echo "Verify that the sd card is not mounted, the format will fail otherwise!"
 	@sudo dd if=/dev/zero of=/dev/$(MOUNT) bs=1024 count=1
-	@echo "x\nh\n255\ns\n63\nr\nn\np\n1\n2048\n+200M\nn\np\n2\n\n\na\n1\nt\n1\nc\nt\n2\n83\nw\n" | sudo fdisk /dev/$(MOUNT)
+	@echo "\nx\nh\n255\ns\n63\nr\nn\np\n1\n2048\n+200M\nn\np\n2\n\n\na\n1\nt\n1\nc\nt\n2\n83\nw\n" | sudo fdisk /dev/$(MOUNT)
 	@sudo mkfs.vfat -F 32 -n BOOT /dev/$(MOUNT)1
 	@sudo mkfs.ext4 -L root /dev/$(MOUNT)2
 	@echo "SD card format successful! You can know copy files from '$(SDCARD_DIR)/' to SD card."
 
 make.sdcard:
-	@read -p "Where is mounted the SD card?: " sdcard_mount; rm $$sdcard_mount/*; cp $(SDCARD_DIR)/* $$sdcard_mount/
+	@read -p "Where is mounted the SD card boot partition?: " sdcard_mount; rm $$sdcard_mount/*; cp $(SDCARD_DIR)/* $$sdcard_mount/
 	@echo "Done!"
 
 all.sdcard: format.sdcard make.sdcard
