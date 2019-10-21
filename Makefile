@@ -2,7 +2,7 @@
 SDCARD_DIR=sdcard
 
 # sdcard config
-MOUNT?=sdc
+MOUNT?=sdb
 MOUNTED=`ls /dev | grep -c $(MOUNT)`
 
 # Compile config
@@ -78,8 +78,9 @@ fsbl:
 
 ramdisk:
 	@if ! [ -d "$(SDCARD_DIR)" ]; then mkdir $(SDCARD_DIR); fi
-	@echo "Make ramdisk image"
+	@echo "Make ramdisk image from $(RAMDISK_DIR)/arm_ramdisk.image.gz"
 	@$(U_BOOT_DIR)/tools/mkimage -A arm -T ramdisk -C gzip -d $(RAMDISK_DIR)/arm_ramdisk.image.gz $(SDCARD_DIR)/uramdisk.image.gz
+	@echo "New ramdisk is now in $(SDCARD_DIR)/uramdisk.image.gz"
 
 boot.bin:
 	@[ -f "$(SDCARD_DIR)/fpga.bit" ] || (echo "No bitstream found in $(SDCARD_DIR)/. Please move your bitstream in $(SDCARD_DIR) and rename it fpga.bit" && exit 1)
