@@ -1,4 +1,5 @@
-sdcard/
 linux-*/
 u-boot-*/
 zynq-*/
+sdcard/*
+!sdcard/.gitkeep

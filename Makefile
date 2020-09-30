@@ -83,8 +83,8 @@ ramdisk:
 	@echo "New ramdisk is now in $(SDCARD_DIR)/uramdisk.image.gz"
 
 boot.bin:
-	@[ -f "$(SDCARD_DIR)/fpga.bit" ] || (echo "No bitstream found in $(SDCARD_DIR)/. Please move your bitstream in $(SDCARD_DIR) and rename it fpga.bit" && exit 1)
-	@echo "all:\n{\n  [bootloader]$(SDCARD_DIR)/fsbl.elf\n  $(SDCARD_DIR)/fpga.bit\n  $(SDCARD_DIR)/u-boot.elf\n  [load=0x2000000]$(SDCARD_DIR)/devicetree.dtb\n  [load=0x4000000]$(SDCARD_DIR)/uramdisk.image.gz\n  [load=0x2080000]$(SDCARD_DIR)/uImage.bin\n}" > $(SDCARD_DIR)/boot.bif
+	#@[ -f "$(SDCARD_DIR)/fpga.bit" ] || (echo "No bitstream found in $(SDCARD_DIR)/. Please move your bitstream in $(SDCARD_DIR) and rename it fpga.bit" && exit 1)
+	@echo "all:\n{\n  [bootloader]$(SDCARD_DIR)/fsbl.elf\n  $(SDCARD_DIR)/u-boot.elf\n  [load=0x2000000]$(SDCARD_DIR)/devicetree.dtb\n  [load=0x4000000]$(SDCARD_DIR)/uramdisk.image.gz\n  [load=0x2080000]$(SDCARD_DIR)/uImage.bin\n}" > $(SDCARD_DIR)/boot.bif
 	@if ! [ -d "$(BOOTGEN_DIR)" ]; then git clone $(BOOTGEN_REPO); fi
 	@cd $(BOOTGEN_DIR); make; cd ..
 	@$(BOOTGEN_DIR)/mkbootimage $(SDCARD_DIR)/boot.bif $(SDCARD_DIR)/BOOT.bin
