@@ -11,4 +11,4 @@ This script automate the different operations to create a bootable SDCard for Xi
 
 ## Instructions
 
-In order to juste compile the different files for the SD card, run ```./make_docker.sh```. If you then want to flash the SD card with the correct partitions, run ```make format.sdcard```.
+In order to juste compile the different files for the SD card, run ```./make_docker.sh```. If you then want to flash the SD card with the correct partitions, edit the ```MOUNT``` variable (line 5) in the Makefile then run ```make format.sdcard```.

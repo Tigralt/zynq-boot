@@ -103,7 +103,7 @@ format.sdcard:
 	@echo "\nx\nh\n255\ns\n63\nr\nn\np\n1\n2048\n+200M\nn\np\n2\n\n\na\n1\nt\n1\nc\nt\n2\n83\nw\n" | sudo fdisk /dev/$(MOUNT)
 	@sudo mkfs.vfat -F 32 -n BOOT /dev/$(MOUNT)1
 	@sudo mkfs.ext4 -L root /dev/$(MOUNT)2
-	@echo "SD card format successful! You can know copy files from '$(SDCARD_DIR)/' to SD card."
+	@echo "SD card format successful! You can know copy files from the '$(SDCARD_DIR)' folder to your SD card."
 
 make.sdcard:
 	@read -p "Where is mounted the SD card boot partition?: " sdcard_mount; rm $$sdcard_mount/*; cp $(SDCARD_DIR)/* $$sdcard_mount/
